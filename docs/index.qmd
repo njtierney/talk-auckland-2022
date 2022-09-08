@@ -1,6 +1,6 @@
 ---
-title: "Awesome Title"
-subtitle: "Where is this talk?"
+title: "Extendable projection of social contact matrices"
+subtitle: "University of Auckland"
 author: "Nicholas Tierney"
 institute: Telethon Kids Institute
 format: 
@@ -10,6 +10,8 @@ editor: visual
 execute: 
   echo: false
   warning: true
+  cache: true
+  freeze: true
 ---
 
 ```{r}
@@ -22,7 +24,6 @@ library(gganimate)
 library(knitr)
 library(ggrepel)
 ```
-
 
 ```{r}
 #| label: helpers
@@ -67,43 +68,201 @@ nipa <- list(red = "#c03018",
 
 # Background
 
-Put More slides here.
-
-::: {.notes}
-Speaker notes go here.
+::: notes
+I'm a research software engineer, I help translate research methods into open source research software. One of my primary tasks is Extending/maintaining `greta` for statistical computing. I also work on creating and extending other software as needed for our team. Optional bits: PhD statistics - emphasis on frustration developing workflows R packages to facilitate exploratory data analysis Overviews, missing data, longitudinal data
 :::
 
-# Take homes
+## COVID spread
+
+Diseases like COVID19 spread through face to face social contact.
+
+## Describing spread
+
+-   Epidemiological models often use a "contact matrix" to describe the spread of infectious diseases.
+
+-   Contact matrices describe the degree of contact between individuals of given age groups.
+
+## Contact data
+
+-   Contact matrices are produced from empirical data resulting from a contact survey
+-   Requires individuals to diary the amount and manner of contact a person has in a day.
+
+## Contact data example
+
+A contact matrix could describe the number of contacts between children, teenagers, and parents.
+
+```{r}
+
+mat_names <- c("Parent", "Teenager", "Child")
+
+example_mat <- matrix(rpois(9, 5)+1, 
+       nrow = 3, 
+       ncol = 3,
+       dimnames = list(
+         mat_names,
+         rev(mat_names)
+       ))
+
+example_mat
+```
+
+## Using contact matrices
+
+-   Calculate R0 (Expected number of people someone infects)
+-   Adjust to transmission risk
+-   Adjust transmission risk by vaccination
+    -   Then get an adjusted R0
+
+## Issues with contact matrices
+
+-   Contact surveys are highly time-consuming and expensive to run
+-   Only a handful of these empirical datasets exist globally
+-   So how we we get a contact matrix for a country not on the list?
+
+## Synthetic contact matrices
+
+-   Pre-existing statistical methodologies project empirical contact matrices to new countries.
+-   New projected contact matrices: "synthetic contact matrices"
+
+## Creating Synthetic contact matrices
+
+-   Use existing contact surveys
+-   Use setting-specific survey data on household, school, classroom, and workplace composition
+-   Combine with empirical data on contact patterns in Europe using statistical models
+
+## Prem et al
+
+-   Prem et al. have one of the most widely used approaches to synthetic contact matrices
+-   Extensively applied across infectious diseases applications
+-   Initially provided 155 matrices for 155 countries (177 later in 2020)
+
+## Image
+
+**image of spreadsheet booklet of contact matrices**
+
+::: notes
+The main issue with this is that we don't have much control over the outputs.
+
+And maybe that doesn't matter to you if you just need to look at the contact matrices for a given country.
+
+But what we needed to do is get contact matrices for a given age population structure.
+:::
+
+## Populations are different
+
+For example, local government areas in Australia.
+
+## Issues with extensions
+
+-   Prem et al do provide their code, however, a few key issues:
+
+    -   It was code not written for reuse
+
+        -   No clear interface on how to get inputs for a given country or region.
+
+            -   This brings up the distinction between code & software, I'll touch on this later
+
+    -   Not clear if the code matched the methods
+
+    -   Potentially overestimate workplace contacts
+
+    -   Potentially underestimate home contact rates
+
+## Build our own extension
+
+-   Decided to to write software to build a model
+
+-   Predict contact rate for a given age structure population
+
+## Talk Overview
+
+-   A demonstration of the use case of conmat
+-   Process of writing this software
+-   Challenges with designing a programming interface
+
+## Demonstration of conmat
+
+```{r}
+# fit a model
+library(conmat)
+fairfield_age_pop <- abs_age_lga("Fairfield (C)")
+fairfield_age_pop
+
+```
+
+## Demonstration of conmat
+
+```{r}
+polymod_contact_data <- get_polymod_setting_data()
+polymod_survey_data <- get_polymod_population()
+
+```
+
+## Demonstration of conmat
+
+```{r}
+setting_models <- fit_setting_contacts(
+  contact_data_list = polymod_contact_data,
+  population = polymod_survey_data
+  )
+
+str(setting_models)
+```
+
+## Demonstration of conmat
+
+```{r}
+synthetic_settings_5y_fairfield <- predict_setting_contacts(
+  population = fairfield_age_pop,
+  contact_model = setting_models,
+  age_breaks = c(seq(0, 85, by = 5), Inf)
+  )
+
+synthetic_settings_5y_fairfield
+```
+
+## Process of Writing software
+
+## Challenges in Designing Interface
+
+-   Hard coding variables
+
+    -   age and population columns are currently required to be named `lower.age.limit` and `population`
+
+        -   Two possible ways to resolve this
+
+            1.  provide arguments for specifying the age and population information (`age_col` and `population_col`
+            2.  Some kind of class based approach, where we encode or validate the `age` and `population` columns.
+
+        -   One requires more typing of arguments, the other requires the user to use some extra function to validate their population data.
 
 # Future Directions
 
 ::: {.fragment .fade-up}
-- More features
-- More features
-- More features
+-   More features
+-   More features
+-   More features
 :::
 
 # Test
 
 # Thanks
 
-:::: {.columns}
-
+::: columns
 ::: {.column width = "40%"}
 
-- So many great people
-- So many great people
-- So many great people
-- So many great people
-
+-   So many great people
+-   So many great people
+-   So many great people
+-   So many great people
 :::
 
 ::: {.column width = "40%"}
 
-- So many great people
-- So many great people
-- So many great people
-- So many great people
+-   So many great people
+-   So many great people
+-   So many great people
+-   So many great people
 
 :::
 
@@ -111,20 +270,15 @@ Speaker notes go here.
 
 # Resources
 
-- So many things
-- So many things
-- So many things
-- So many things
+-   So many things
+-   So many things
+-   So many things
+-   So many things
 
 # Colophon
 
-- Slides made using [quarto](https://github.com/quarto-dev/quarto)
-- Colours taken + modified from [lorikeet theme from ochRe](https://github.com/ropenscilabs/ochRe)
-[njtierney/njt-talks](github.com/njtierney/njt-talks)
-<!-- - Header font is **Josefin Sans** -->
-<!-- - Body text font is **Montserrat** -->
-<!-- - Code font is **Fira Mono** -->
-<!-- - template available:  -->
+-   Slides made using [quarto](https://github.com/quarto-dev/quarto)
+-   Colours taken + modified from [lorikeet theme from ochRe](https://github.com/ropenscilabs/ochRe) [njtierney/njt-talks](github.com/njtierney/njt-talks) <!-- - Header font is **Josefin Sans** --> <!-- - Body text font is **Montserrat** --> <!-- - Code font is **Fira Mono** --> <!-- - template available:  -->
 
 # Learning more
 
@@ -136,6 +290,6 @@ Speaker notes go here.
 
 `r icon_github` njtierney
 
-`r icon_plane` nicholas.tierney@gmail.com
+`r icon_plane` nicholas.tierney\@gmail.com
 
 # **End.**

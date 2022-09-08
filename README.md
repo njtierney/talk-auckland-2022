@@ -1,9 +1,17 @@
-# Nick's Slide Template (replace with talk title)
+# Extendable projection of social contact matrices
 <!-- NETLIFY BADGE SHOULD GO HERE-->
 
 This is a slide template I have put on github so that I can get started with talks easier.
 
 # Abstract
+
+Contact matrices describe the degree of face-to-face contact between individuals of given age groups. These matrices are commonly used to model how diseases such as COVID-19 spread in a population through social contact. Contact matrices are produced from empirical data resulting from a contact survey, which requires individuals to diary the amount and manner of contact a person has in a day. However, these surveys are highly time-consuming and expensive to run, meaning that there exists only a handful of these empirical datasets globally. 
+
+There are existing statistical methodologies to project empirical contact matrices to new countries - e.g. those produce by Prem et al. Existing work provides these synthetic contact matrices for a fixed set of countries, at specific points in time. Infectious disease modellers therefore face a problem when developing models for countries not considered in these analyses, or for subpopulations within those countries. We need software to implement these methods so they can be flexibly reused on different populations.
+
+We have developed methods for creating synthetic contact matrices that uses existing contact surveys but can be used to create synthetic contact matrices  for any new age population structure. These methods are available in the R package {conmat}. {conmat} contains a suite of tools for using these synthetic matrices in other epidemiology concepts, such as generating a next generation matrix (incorporating age-varying transmission parameters), and adjusting transmission according to vaccination rates. 
+
+In this talk, I demonstrate the use of the {conmat} package, showcasing how it can be used in epidemiological analyses. I will also discuss the process of creating the software and the user interface.
 
 # Slide available [here](https://www.FILL-LINK-IN-HERE.ok)
 
