@@ -388,7 +388,7 @@
     <div class="slides">
 
 <section id="title-slide" class="center">
-  <h1 class="title">Extendable projection of social contact matrices</h1>
+  <h1 class="title"><strong>Extendable</strong> projection of social contact matrices</h1>
   <p class="subtitle">University of Auckland</p>
   <p class="author">Nicholas Tierney</p>
   <p class="institute">Telethon Kids Institute</p>
@@ -469,14 +469,118 @@
 <!-- Professor Nick Golding -->
 <!-- [greta-stats.org](https://www.greta-stats.org) -->
 </section>
-<section id="greta-v-stan-v-jags" class="slide level2">
-<h2>greta v stan v JAGS</h2>
+<section id="greta-is-r-code" class="slide level2">
+<h2>greta is R code</h2>
+<div class="columns">
+<div class="column" style="width:45%;">
+<p><strong>stan</strong></p>
+<pre><code>data {
+  real alpha;
+  real beta;
+  real&lt;lower=0&gt; sigma2;
+  int&lt;lower=0&gt; J;
+  array[J] int y;
+  vector[J] Z;
+  array[J] int n;
+}
+transformed data {
+  real&lt;lower=0&gt; sigma;
+  sigma = sqrt(sigma2);
+}
+parameters {
+  real theta1;
+  real theta2;
+  vector[J] X;
+}
+model {
+  array[J] real p;
+  theta1 ~ normal(0, 32); // 32^2 = 1024 
+  theta2 ~ normal(0, 32);
+  X ~ normal(alpha + beta * Z, sigma);
+  y ~ binomial_logit(n, theta1 + theta2 * X);
+}</code></pre>
+</div><div class="column" style="width:55%;">
+<p><strong>JAGS</strong></p>
+<pre><code>for(j in 1 : J) {
+   y[j] ~ dbin(p[j], n[j])
+   logit(p[j]) &lt;- theta[1] + theta[2] * X[j]
+   X[j] ~ dnorm(mu[j], tau)
+   mu[j] &lt;- alpha + beta * Z[j]
+}
+theta[1] ~ dnorm(0.0, 0.001)
+theta[2] ~ dnorm(0.0, 0.001)</code></pre>
+<p><strong>greta</strong></p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>theta <span class="ot">&lt;-</span> <span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">32</span>, <span class="at">dim =</span> <span class="dv">2</span>)</span>
+<span id="cb3-2"><a href="#cb3-2"></a>mu <span class="ot">&lt;-</span> alpha <span class="sc">+</span> beta <span class="sc">*</span> Z</span>
+<span id="cb3-3"><a href="#cb3-3"></a>X <span class="ot">&lt;-</span> <span class="fu">normal</span>(mu, sigma)</span>
+<span id="cb3-4"><a href="#cb3-4"></a>p <span class="ot">&lt;-</span> <span class="fu">ilogit</span>(theta[<span class="dv">1</span>] <span class="sc">+</span> theta[<span class="dv">2</span>] <span class="sc">*</span> X)</span>
+<span id="cb3-5"><a href="#cb3-5"></a><span class="fu">distribution</span>(y) <span class="ot">&lt;-</span> <span class="fu">binomial</span>(n, p)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
 </section>
-<section id="research-software-engineer" class="slide level2">
-<h2>Research Software Engineer</h2>
+<section>
+<section id="google-tensorflow" class="title-slide slide level1 center">
+<h1>google tensorflow</h1>
+<div class="columns">
+<div class="column" style="width:45%;">
 <ul>
-<li class="fragment"><p>Background in research</p></li>
-<li class="fragment"><p>Skills in software engineering</p></li>
+<li class="fragment">automatic differentiation</li>
+<li class="fragment">efficient linear algebra</li>
+<li class="fragment">highly parallel</li>
+</ul>
+</div><div class="column" style="width:45%;">
+<div class="cell" data-hash="index_cache/revealjs/tf-examples_869ca40533941a4f139fd2bd2405bfea">
+<div class="cell-output-display">
+<p><img data-src="images/tf-examples.png" width="200"></p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="extendable" class="slide level2">
+<h2>extendable</h2>
+
+<img data-src="images/greta-extendable.png" width="278" class="r-stretch"></section></section>
+<section>
+<section id="greta.gp" class="title-slide slide level1 center">
+<h1><code>greta.gp</code></h1>
+<blockquote>
+<p><code>greta.gp</code> extends <code>greta</code> to let you define Gaussian processes as part of your model. It provides a syntax to create and combine GP kernels, and use them to define either full rank or sparse Gaussian processes.</p>
+</blockquote>
+<div class="columns">
+<div class="column" style="width:60%;">
+<div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co"># kernel &amp; GP</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a>kernel <span class="ot">&lt;-</span> <span class="fu">rbf</span>(rbf_len, rbf_var) <span class="sc">+</span> </span>
+<span id="cb4-3"><a href="#cb4-3"></a>            <span class="fu">bias</span>(<span class="dv">1</span>)</span>
+<span id="cb4-4"><a href="#cb4-4"></a>f <span class="ot">&lt;-</span> <span class="fu">gp</span>(x, kernel)</span>
+<span id="cb4-5"><a href="#cb4-5"></a><span class="co"># likelihood</span></span>
+<span id="cb4-6"><a href="#cb4-6"></a><span class="fu">distribution</span>(y) <span class="ot">&lt;-</span> <span class="fu">normal</span>(f, obs_sd)</span>
+<span id="cb4-7"><a href="#cb4-7"></a><span class="co"># prediction</span></span>
+<span id="cb4-8"><a href="#cb4-8"></a>f_plot <span class="ot">&lt;-</span> <span class="fu">project</span>(f, x_plot)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div><div class="column" style="width:38%;">
+<div class="cell" data-hash="index_cache/revealjs/extendable-greta-gp_251e53c8137396b73cbdb7d91f838203">
+<div class="cell-output-display">
+<p><img data-src="images/greta-extendable-gp.png" width="1000"></p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="define-research-software-engineer" class="slide level2">
+<h2>Define: Research Software Engineer</h2>
+<blockquote>
+<p>A Research Software Engineer (RSE) combines professional software engineering expertise with an intimate understanding of research.</p>
+</blockquote>
+<p>– (from https://society-rse.org/about/)</p>
+</section>
+<section id="what-sorts-of-things-does-an-rse-do" class="slide level2">
+<h2>What sorts of things does an RSE do?</h2>
+<ul>
+<li class="fragment"><p>Create software to <strong>solve research problems</strong></p></li>
+<li class="fragment"><p>Develop tools that <strong>abstract the right components</strong> to facilitate research</p></li>
+<li class="fragment"><p>Help researchers to <strong>find and learn</strong> good tools</p></li>
+<li class="fragment"><p>Support researchers with (computational) reproducibility</p></li>
+<li class="fragment"><p>(adapted from Heidi Seibold’s <a href="https://docs.google.com/presentation/d/1XQc2U2X8hiK43UzUi9IwvsvULxhVy0WzWSa_Kt4ZJv4/view#slide=id.gdbfb32d486_0_448">UseR2021 Keynote talk</a>)</p></li>
 </ul>
 <aside class="notes">
 <p>I bring this up because I feel a bit of a need to explain my background to help explain the context of what I do</p>
@@ -492,17 +596,27 @@
           display:block!important;
       }</style></aside>
 </section>
+<section id="what-this-talk-is-about" class="slide level2">
+<h2>What this talk is about</h2>
+<ul>
+<li class="fragment"><p>Explain <strong>how</strong> I came to help write software for infectious disease modelling</p></li>
+<li class="fragment"><p>Touch on the <strong>overall</strong> approach for methods (not enough time). The majority of my role was on software and interface design.</p></li>
+<li class="fragment"><p>Instead, I’ll discuss <strong>why</strong> we needed our own method &amp; software design decisions</p></li>
+<li class="fragment"><p>Advocate for contributions of <strong>software design + statistical thinking</strong>: <em>the way of the research software engineer</em>, so to speak.</p></li>
+</ul>
+</section>
 <section id="joining-an-infectious-disease-team" class="slide level2">
 <h2>Joining an infectious disease team</h2>
 <ul>
 <li class="fragment"><p>August, 2021: Australia is working on the plan to reopen, part of “The Doherty Report”</p></li>
 <li class="fragment"><p>They need more hands to help with data analysis and software development</p></li>
-<li class="fragment"><p>I helped develop pipelines and software for disease modelling, establish code bases for people to contribute to</p></li>
+<li class="fragment"><p>I joined to assist for ~4 months</p></li>
+<li class="fragment"><p>Helped develop pipelines + software for disease modelling, establish code base for people to contribute</p></li>
 </ul>
-</section>
+</section></section>
 <section>
-<section id="blank-slide" class="title-slide slide level1 center">
-<h1>blank slide</h1>
+<section id="soliloquy" class="title-slide slide level1 center">
+<h1>Soliloquy</h1>
 <aside class="notes">
 <p>I wanted to take a moment to talk about the dedication of this group of people. They worked tirelessly, and had been working tirelessly since March 2020. There were a heap of tight deadlines, and massive amounts of work that they graciously took on. It was a massive honour to work with all of these people.</p>
 <style type="text/css">
@@ -517,20 +631,10 @@
           display:block!important;
       }</style></aside>
 </section>
-<section id="what-this-talk-is-about" class="slide level2">
-<h2>What this talk is about</h2>
-<ul>
-<li class="fragment"><p>I want to explain how I came to help write software for infectious disease modelling</p></li>
-<li class="fragment"><p>I’ll touch on the overall approach for the method, but honestly it’s hard to explain in not much time</p></li>
-<li class="fragment"><p>I’ll spend more time on the reasons for why we needed to make our own method, and some of the design considerations we made when making the software</p></li>
-<li class="fragment"><p>In the process I’ll also be trying to advocate for the contribution you can make if you have a good grasp of software design along with statistical thinking: the way of the research software engineer, so to speak.</p></li>
-</ul>
-</section>
 <section id="infectious-disease-modelling" class="slide level2">
 <h2>Infectious Disease Modelling</h2>
 <ul>
-<li class="fragment"><p>I was a part of a team advising Australian Government for COVID response in 2021</p></li>
-<li class="fragment"><p>Diseases like COVID19 and Influenza spread through face to face social contact</p></li>
+<li class="fragment">Diseases like COVID19 and Influenza spread through face to face social contact</li>
 </ul>
 <aside class="notes">
 <ul>
@@ -571,7 +675,7 @@
 <section id="example-visually" class="slide level2">
 <h2>Example: visually</h2>
 
-<img data-src="index_files/figure-revealjs/unnamed-chunk-8-1.png" width="960" class="r-stretch"><aside class="notes">
+<img data-src="index_files/figure-revealjs/unnamed-chunk-10-1.png" width="960" class="r-stretch"><aside class="notes">
 <p>This shows whether people had contact, yes or no. We can see that everyone had contact with one another except for Nick, and with Nick. Note that we could change this from something logical - “did they have contact” to “how many times did you have contact?”</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
@@ -587,19 +691,19 @@
 </section>
 <section id="example-matrix" class="slide level2">
 <h2>Example: matrix</h2>
-<div class="cell" data-hash="index_cache/revealjs/example-matrix_5f64fb6399d1aa4a31c715bd5c0c84e9">
+<div class="cell" data-hash="index_cache/revealjs/example-matrix_002fb659da9ba501f3cb3e5719d6a2b5">
 <div class="cell-output cell-output-stdout">
 <pre style="font-size:170%;"><code>      James  Luke  Nick
-James  TRUE  TRUE FALSE
-Luke   TRUE  TRUE FALSE
-Nick  FALSE FALSE  TRUE</code></pre>
+James    NA  TRUE FALSE
+Luke   TRUE    NA FALSE
+Nick  FALSE FALSE    NA</code></pre>
 </div>
 </div>
 </section>
 <section id="logical-numeric" class="slide level2">
 <h2>Logical –&gt; Numeric</h2>
 
-<img data-src="index_files/figure-revealjs/unnamed-chunk-10-1.png" width="960" class="r-stretch"><aside class="notes">
+<img data-src="index_files/figure-revealjs/unnamed-chunk-12-1.png" width="960" class="r-stretch"><aside class="notes">
 <p>So now we have not just, “Did you have contact?”, but, “How many times did you have contact?” Instead of individual people, we could change this to age groups.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
@@ -616,7 +720,7 @@ Nick  FALSE FALSE  TRUE</code></pre>
 <section id="people-age-groups" class="slide level2">
 <h2>People –&gt; Age groups</h2>
 
-<img data-src="index_files/figure-revealjs/unnamed-chunk-11-1.png" width="960" class="r-stretch"></section>
+<img data-src="index_files/figure-revealjs/unnamed-chunk-13-1.png" width="960" class="r-stretch"></section>
 <section id="what-do-you-do-with-this" class="slide level2">
 <h2>What do you do with this?</h2>
 <ul>
@@ -632,6 +736,7 @@ Nick  FALSE FALSE  TRUE</code></pre>
 <li class="fragment"><p>We don’t. Well, not in Australia. Yet.</p></li>
 <li class="fragment"><p>You need to conduct a surveys where people diary the amount and manner of daily contacts they have.</p></li>
 <li class="fragment"><p><a href="https://journals.plos.org/plosmedicine/article?id=10.1371/journal.pmed.0050074">Mossong et al</a> have this for 8 countries in Europe</p></li>
+<li class="fragment"><p>Referred to as the POLYMOD study</p></li>
 </ul>
 <aside class="notes">
 <ul>
@@ -704,11 +809,11 @@ Nick  FALSE FALSE  TRUE</code></pre>
 <section id="brief-explainer-of-prem" class="slide level2">
 <h2>Brief explainer of Prem</h2>
 <ul>
-<li class="fragment"><p><span class="math inline">\(X^{L}_{i,\alpha} \sim Poisson(\mu_{i}^{L}, \alpha)\)</span></p></li>
+<li class="fragment"><p><span class="math inline">\(X^{L}_{i,\alpha} \sim Poisson(\mu_{i, \alpha}^{L})\)</span></p></li>
 <li class="fragment"><p><span class="math inline">\(X^{L}_{i,\alpha}\)</span> is the number of contacts made by individual <span class="math inline">\(i\)</span> at a particular location <span class="math inline">\(L\)</span> with someone in age group <span class="math inline">\(\alpha\)</span> is modelled to be Poisson with mean <span class="math inline">\(\mu_{i}^{L}\)</span>.</p></li>
 <li class="fragment"><p>the ages of individual <span class="math inline">\(i\)</span>, <span class="math inline">\(\alpha_i\)</span>, and their contact, <span class="math inline">\(\alpha\)</span> are broken into 5 year age intervals</p></li>
-<li class="fragment"><p><span class="math inline">\(L\)</span> denotes the contact location: L = … H (Home), W (Work), S (School), O (other)</p></li>
-<li class="fragment"><p>There is a lot more to the method! Not enough time.</p></li>
+<li class="fragment"><p><span class="math inline">\(L\)</span> denotes contact location: L = … H (Home), W (Work), S (School), O (other)</p></li>
+<li class="fragment"><p>Main thrust: Contact matrices are projected because the age distribution of population is included in <span class="math inline">\(\mu\)</span></p></li>
 </ul>
 </section>
 <section id="brief-explainer-of-prem-1" class="slide level2">
@@ -748,15 +853,15 @@ Nick  FALSE FALSE  TRUE</code></pre>
 <section id="populations-are-different" class="slide level2">
 <h2>Populations are different</h2>
 
-<img data-src="index_files/figure-revealjs/unnamed-chunk-12-1.png" width="960" class="r-stretch"></section>
+<img data-src="index_files/figure-revealjs/unnamed-chunk-14-1.png" width="960" class="r-stretch"></section>
 <section id="populations-are-different-1" class="slide level2">
 <h2>Populations are different</h2>
 
-<img data-src="index_files/figure-revealjs/unnamed-chunk-13-1.png" width="960" class="r-stretch"></section>
+<img data-src="index_files/figure-revealjs/unnamed-chunk-15-1.png" width="960" class="r-stretch"></section>
 <section id="what-we-want" class="slide level2">
 <h2>What we want</h2>
 <ul>
-<li class="fragment">We want to be able use an <strong>age distribution population</strong></li>
+<li class="fragment">We want to be able use a <strong>population age distribution</strong></li>
 </ul>
 <div class="cell" data-hash="index_cache/revealjs/fairfield_24616a5473e7c628b4ccb6d88a19b18a">
 <div class="cell-output cell-output-stdout">
@@ -787,12 +892,12 @@ Nick  FALSE FALSE  TRUE</code></pre>
 <section id="what-we-want-1" class="slide level2">
 <h2>What we want</h2>
 <ul>
-<li class="fragment">Input <strong>age distribution population</strong> and get out a contact matrix.</li>
+<li class="fragment">Input <strong>population age distribution</strong> and get out a contact matrix.</li>
 </ul>
-<div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-15_9cecf2ffe956e820b491a0b86e1ca41b">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="fu">extrapolate_from_data</span>(</span>
-<span id="cb3-2"><a href="#cb3-2"></a>  <span class="at">population =</span> fairfield</span>
-<span id="cb3-3"><a href="#cb3-3"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-17_d0a73f029e8f558cf6dd05a143f2cf5f">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="fu">extrapolate_from_data</span>(</span>
+<span id="cb7-2"><a href="#cb7-2"></a>  <span class="at">population =</span> fairfield</span>
+<span id="cb7-3"><a href="#cb7-3"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="how-do-we-extend-this-method" class="slide level2">
@@ -806,6 +911,7 @@ Nick  FALSE FALSE  TRUE</code></pre>
 <li class="fragment"><p>Challenging to see which bits of code matched which methods</p></li>
 </ul></li>
 </ul></li>
+<li class="fragment"><p>Australia was in original 155 countries, not in the new updated 177!</p></li>
 </ul>
 </section>
 <section id="building-our-own-extension" class="slide level2">
@@ -820,9 +926,9 @@ Nick  FALSE FALSE  TRUE</code></pre>
 <section id="demonstration-of-conmat" class="slide level2">
 <h2>Demonstration of conmat</h2>
 <div class="cell" data-hash="index_cache/revealjs/get-fairfield_ec783998d9e68502d98c7beb5b8c6e3e">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="fu">library</span>(conmat)</span>
-<span id="cb4-2"><a href="#cb4-2"></a>fairfield <span class="ot">&lt;-</span> <span class="fu">abs_age_lga</span>(<span class="st">"Fairfield (C)"</span>)</span>
-<span id="cb4-3"><a href="#cb4-3"></a>fairfield</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="fu">library</span>(conmat)</span>
+<span id="cb8-2"><a href="#cb8-2"></a>fairfield <span class="ot">&lt;-</span> <span class="fu">abs_age_lga</span>(<span class="st">"Fairfield (C)"</span>)</span>
+<span id="cb8-3"><a href="#cb8-3"></a>fairfield</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 18 × 4
    lga           lower.age.limit  year population
@@ -851,11 +957,11 @@ Nick  FALSE FALSE  TRUE</code></pre>
 <section id="extrapolate-to-a-new-population" class="slide level2">
 <h2>Extrapolate to a new population</h2>
 <div class="cell" data-hash="index_cache/revealjs/extrapolate-fairfield_44930d56c0ea9e908372037f291e8ef0">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>synthetic_fairfield <span class="ot">&lt;-</span> <span class="fu">extrapolate_polymod</span>(</span>
-<span id="cb6-2"><a href="#cb6-2"></a> <span class="at">population =</span> fairfield,</span>
-<span id="cb6-3"><a href="#cb6-3"></a> <span class="at">age_breaks =</span> <span class="fu">c</span>(<span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">75</span>, <span class="at">by =</span> <span class="dv">5</span>), <span class="cn">Inf</span>) <span class="co"># default</span></span>
-<span id="cb6-4"><a href="#cb6-4"></a>)</span>
-<span id="cb6-5"><a href="#cb6-5"></a>synthetic_fairfield</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a>synthetic_fairfield <span class="ot">&lt;-</span> <span class="fu">extrapolate_polymod</span>(</span>
+<span id="cb10-2"><a href="#cb10-2"></a> <span class="at">population =</span> fairfield,</span>
+<span id="cb10-3"><a href="#cb10-3"></a> <span class="at">age_breaks =</span> <span class="fu">c</span>(<span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">75</span>, <span class="at">by =</span> <span class="dv">5</span>), <span class="cn">Inf</span>) <span class="co"># default</span></span>
+<span id="cb10-4"><a href="#cb10-4"></a>)</span>
+<span id="cb10-5"><a href="#cb10-5"></a>synthetic_fairfield</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>$home
               [0,5)     [5,10)    [10,15)    [15,20)    [20,25)    [25,30)
@@ -1141,40 +1247,43 @@ $all
 </div>
 </div>
 </section>
-<section id="plot-new-contact-matrix" class="slide level2">
-<h2>plot new contact matrix</h2>
+<section id="contact-matrix-fairfield" class="slide level2">
+<h2>Contact matrix: Fairfield</h2>
 <div class="cell" data-hash="index_cache/revealjs/plot-matrix-fairfield_9a4c57d5217cd158625d3fcd4cfdead2">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="fu">plot_matrix</span>(synthetic_fairfield<span class="sc">$</span>home)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="fu">plot_matrix</span>(synthetic_fairfield<span class="sc">$</span>home)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 
 </div>
-<img data-src="index_files/figure-revealjs/plot-matrix-fairfield-1.png" width="960" class="r-stretch"><div class="cell" data-hash="index_cache/revealjs/polymod-extrapolate_e919f8ac1fa20cd663da6c02f367ad28">
+<img data-src="index_files/figure-revealjs/plot-matrix-fairfield-1.png" width="960" class="r-stretch"><div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-21_955b014e34505145d86d1624fe0d780f">
+
+</div>
+<div class="cell" data-hash="index_cache/revealjs/polymod-extrapolate_d84472cc2380de14de07b1999a0286d6">
 
 </div>
 </section>
-<section id="plot-polymod" class="slide level2">
-<h2>plot POLYMOD</h2>
-<div class="cell" data-hash="index_cache/revealjs/plot-matrix-polymod_4912c5d5565f85511319123962066aaa">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="fu">plot_matrix</span>(synthetic_polymod<span class="sc">$</span>home)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="contact-matrix-australia" class="slide level2">
+<h2>Contact matrix: Australia</h2>
+<div class="cell" data-hash="index_cache/revealjs/plot-matrix-polymod_c4cd4f3de5277971cd41d17931f48697">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a><span class="fu">plot_matrix</span>(synthetic_polymod_oz<span class="sc">$</span>home)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 
 </div>
 <img data-src="index_files/figure-revealjs/plot-matrix-polymod-1.png" width="960" class="r-stretch"></section>
 <section id="create-a-next-generation-matrix" class="slide level2">
 <h2>Create A Next Generation Matrix</h2>
 <ul>
-<li class="fragment">Once infected, a person can transmit an infectious disease to another, creating generations of infected individuals.</li>
-<li class="fragment">We can define a matrix describing the number of newly infected individuals in given categories, such as age, for consecutive generations.</li>
-<li class="fragment">This matrix is called a “next generation matrix” (NGM).</li>
+<li class="fragment">Once infected, a person can transmit an infectious disease to another, creating <strong>generations</strong> of infected individuals.</li>
+<li class="fragment">We can define a matrix describing the <strong>number of newly infected</strong> individuals in given categories, such as age, for consecutive generations.</li>
+<li class="fragment">This matrix is called a <strong>next generation matrix</strong> (NGM).</li>
 </ul>
 </section>
 <section id="create-a-next-generation-matrix-1" class="slide level2">
 <h2>Create A Next Generation Matrix</h2>
 <div class="cell" data-hash="index_cache/revealjs/generate-ngm-fairfield_3ad4e4d17209491d90c6dbf2ec0fe25a">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a>ngm_fairfield <span class="ot">&lt;-</span> <span class="fu">generate_ngm</span>(</span>
-<span id="cb10-2"><a href="#cb10-2"></a>  <span class="at">lga_name =</span> <span class="st">"Fairfield (C)"</span>,</span>
-<span id="cb10-3"><a href="#cb10-3"></a>  <span class="at">age_breaks =</span> <span class="fu">c</span>(<span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">80</span>, <span class="at">by =</span> <span class="dv">5</span>), <span class="cn">Inf</span>),</span>
-<span id="cb10-4"><a href="#cb10-4"></a>  <span class="at">R_target =</span> <span class="fl">1.5</span></span>
-<span id="cb10-5"><a href="#cb10-5"></a>)</span>
-<span id="cb10-6"><a href="#cb10-6"></a>ngm_fairfield</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>ngm_fairfield <span class="ot">&lt;-</span> <span class="fu">generate_ngm</span>(</span>
+<span id="cb14-2"><a href="#cb14-2"></a>  <span class="at">lga_name =</span> <span class="st">"Fairfield (C)"</span>,</span>
+<span id="cb14-3"><a href="#cb14-3"></a>  <span class="at">age_breaks =</span> <span class="fu">c</span>(<span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">80</span>, <span class="at">by =</span> <span class="dv">5</span>), <span class="cn">Inf</span>),</span>
+<span id="cb14-4"><a href="#cb14-4"></a>  <span class="at">R_target =</span> <span class="fl">1.5</span></span>
+<span id="cb14-5"><a href="#cb14-5"></a>)</span>
+<span id="cb14-6"><a href="#cb14-6"></a>ngm_fairfield</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>$home
                [0,5)      [5,10)     [10,15)     [15,20)     [20,25)
@@ -1515,13 +1624,8 @@ $all
 <section id="apply-vaccination" class="slide level2">
 <h2>Apply Vaccination</h2>
 <ul>
-<li class="fragment">Applies the effect of vaccination on the next generation of infections, to understand and describe the reduction of acquisition and transmission in each age group.</li>
-</ul>
-</section>
-<section id="apply-vaccination-1" class="slide level2">
-<h2>Apply vaccination</h2>
-<ul>
-<li class="fragment">Takes the following arguments:
+<li class="fragment"><p>Applies the effect of vaccination on the next generation of infections, to understand and describe the reduction of acquisition and transmission in each age group.</p></li>
+<li class="fragment"><p>Takes the following arguments:</p>
 <ul>
 <li class="fragment"><code>ngm</code> - a Next Generation Matrix</li>
 <li class="fragment"><code>data</code> - A data frame with location specifics</li>
@@ -1529,10 +1633,10 @@ $all
 </ul></li>
 </ul>
 </section>
-<section id="apply-vaccination-example-data" class="slide level2">
-<h2>Apply vaccination: example data</h2>
+<section id="example-vaccination-data" class="slide level2">
+<h2>Example vaccination data</h2>
 <div class="cell" data-hash="index_cache/revealjs/vaccination-example-data_547aa4b1d159906f674a9d9155a42fd0">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a>vaccination_effect_example_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a>vaccination_effect_example_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 17 × 4
    age_band coverage acquisition transmission
@@ -1556,19 +1660,32 @@ $all
 17 80+         0.999       0.844        0.556</code></pre>
 </div>
 </div>
+<aside class="notes">
+<p>I think they are the average vaccine efficacy (expressed as 1 minus the relative risk) over all vaccinated individuals in the population. I.e. we calculate an average form the number of people in that age group that have 1 dose, 2 doses, which brand, how long ago, etc.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
 </section>
-<section id="apply-vaccination-2" class="slide level2">
+<section id="apply-vaccination-1" class="slide level2">
 <h2>Apply vaccination</h2>
 <div class="cell" data-hash="index_cache/revealjs/apply-vaccination-fairfield_5e35bfd32700a74e931ef1619096c604">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>ngm_vacc_fairfield <span class="ot">&lt;-</span> <span class="fu">apply_vaccination</span>(</span>
-<span id="cb14-2"><a href="#cb14-2"></a>  <span class="at">ngm =</span> ngm_fairfield,</span>
-<span id="cb14-3"><a href="#cb14-3"></a>  <span class="at">data =</span> vaccination_effect_example_data,</span>
-<span id="cb14-4"><a href="#cb14-4"></a>  <span class="at">coverage_col =</span> coverage,</span>
-<span id="cb14-5"><a href="#cb14-5"></a>  <span class="at">acquisition_col =</span> acquisition,</span>
-<span id="cb14-6"><a href="#cb14-6"></a>  <span class="at">transmission_col =</span> transmission</span>
-<span id="cb14-7"><a href="#cb14-7"></a>)</span>
-<span id="cb14-8"><a href="#cb14-8"></a></span>
-<span id="cb14-9"><a href="#cb14-9"></a>ngm_vacc_fairfield</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a>ngm_vacc_fairfield <span class="ot">&lt;-</span> <span class="fu">apply_vaccination</span>(</span>
+<span id="cb18-2"><a href="#cb18-2"></a>  <span class="at">ngm =</span> ngm_fairfield,</span>
+<span id="cb18-3"><a href="#cb18-3"></a>  <span class="at">data =</span> vaccination_effect_example_data,</span>
+<span id="cb18-4"><a href="#cb18-4"></a>  <span class="at">coverage_col =</span> coverage,</span>
+<span id="cb18-5"><a href="#cb18-5"></a>  <span class="at">acquisition_col =</span> acquisition,</span>
+<span id="cb18-6"><a href="#cb18-6"></a>  <span class="at">transmission_col =</span> transmission</span>
+<span id="cb18-7"><a href="#cb18-7"></a>)</span>
+<span id="cb18-8"><a href="#cb18-8"></a></span>
+<span id="cb18-9"><a href="#cb18-9"></a>ngm_vacc_fairfield</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>$home
                 [0,5)       [5,10)      [10,15)      [15,20)      [20,25)
@@ -1942,19 +2059,6 @@ $all
 </div>
 </div>
 </section>
-<section id="plot-vaccination-vs-ngm" class="slide level2">
-<h2>Plot vaccination vs NGM</h2>
-</section></section>
-<section>
-<section id="ok-but-how-does-the-model-work" class="title-slide slide level1 center">
-<h1>OK but how does the model work?</h1>
-<ul>
-<li class="fragment">Optional part of the talk.</li>
-<li class="fragment">Plan is to show the predictions of the model as heatmap</li>
-<li class="fragment">Then heatmap of the individual terms</li>
-<li class="fragment">(requires merging in the symmetric terms branch)</li>
-</ul>
-</section>
 <section id="challenges-in-design" class="slide level2">
 <h2>Challenges in Design</h2>
 <ul>
@@ -1963,13 +2067,13 @@ $all
 <li class="fragment">Although there are arguments for <code>age_break</code></li>
 </ul></li>
 <li class="fragment">Design decision to provide access to fitting the model</li>
-<li class="fragment">Fixed and rigid means you cannot change the</li>
+<li class="fragment">Tradeoff: <strong>easy to use</strong> vs <strong>more complex to create</strong></li>
 </ul>
-<div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-24_efc3631089895a531228ee6d686626a2">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a>synthetic_fairfield <span class="ot">&lt;-</span> <span class="fu">extrapolate_polymod</span>(</span>
-<span id="cb16-2"><a href="#cb16-2"></a> <span class="at">population =</span> fairfield,</span>
-<span id="cb16-3"><a href="#cb16-3"></a> <span class="at">age_breaks =</span> <span class="fu">c</span>(<span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">75</span>, <span class="at">by =</span> <span class="dv">5</span>), <span class="cn">Inf</span>)</span>
-<span id="cb16-4"><a href="#cb16-4"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-27_ce3534feaf79bdb8adb1a9fdbb741f41">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a>synthetic_fairfield <span class="ot">&lt;-</span> <span class="fu">extrapolate_polymod</span>(</span>
+<span id="cb20-2"><a href="#cb20-2"></a> <span class="at">population =</span> fairfield,</span>
+<span id="cb20-3"><a href="#cb20-3"></a> <span class="at">age_breaks =</span> <span class="fu">c</span>(<span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">75</span>, <span class="at">by =</span> <span class="dv">5</span>), <span class="cn">Inf</span>)</span>
+<span id="cb20-4"><a href="#cb20-4"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="challenges-in-design-1" class="slide level2">
@@ -1981,8 +2085,8 @@ $all
 <li class="fragment">At least 2 potential ways to resolve this</li>
 </ul></li>
 </ul>
-<div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-25_025f5530be2b028aa12e2ea3d9ad7abd">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a>fairfield</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-28_832b913dba5ba17505645654e189a74e">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a>fairfield</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 18 × 4
    lga           lower.age.limit  year population
@@ -2013,12 +2117,12 @@ $all
 <ol type="1">
 <li class="fragment">Provide arguments for specifying the age and population information (<code>age_col</code> and <code>population_col</code>)</li>
 </ol>
-<div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-26_32d2801b13dc66fe65e30d152c4351e9">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a><span class="fu">extrapolate_polymod</span>(</span>
-<span id="cb19-2"><a href="#cb19-2"></a> <span class="at">population =</span> fairfield,</span>
-<span id="cb19-3"><a href="#cb19-3"></a> <span class="at">age_col =</span> lower.age.limit,</span>
-<span id="cb19-4"><a href="#cb19-4"></a> <span class="at">population_col =</span> population</span>
-<span id="cb19-5"><a href="#cb19-5"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-29_daeb03acb72da07255c19ce4d65fcb19">
+<div class="sourceCode cell-code" id="cb23" data-code-line-numbers="3-4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1"></a><span class="fu">extrapolate_polymod</span>(</span>
+<span id="cb23-2"><a href="#cb23-2"></a> <span class="at">population =</span> fairfield,</span>
+<span id="cb23-3"><a href="#cb23-3"></a> <span class="at">age_col =</span> lower.age.limit,</span>
+<span id="cb23-4"><a href="#cb23-4"></a> <span class="at">population_col =</span> population</span>
+<span id="cb23-5"><a href="#cb23-5"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="challenges-in-design-3" class="slide level2">
@@ -2026,15 +2130,53 @@ $all
 <ol start="2" type="1">
 <li class="fragment">Some kind of class based approach, where we encode or validate the <code>age</code> and <code>population</code> columns.</li>
 </ol>
-<div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-27_819e19fa3f49b61650762cf19aaaea27">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a>fairfield_pop <span class="ot">&lt;-</span> <span class="fu">conmat_population</span>(</span>
-<span id="cb20-2"><a href="#cb20-2"></a>  <span class="at">data =</span> fairfield,</span>
-<span id="cb20-3"><a href="#cb20-3"></a>  <span class="at">age =</span> lower.age.limit,</span>
-<span id="cb20-4"><a href="#cb20-4"></a>  <span class="at">population =</span> population</span>
-<span id="cb20-5"><a href="#cb20-5"></a>)</span>
-<span id="cb20-6"><a href="#cb20-6"></a><span class="fu">extrapolate_polymod</span>(</span>
-<span id="cb20-7"><a href="#cb20-7"></a> <span class="at">population =</span> fairfield_pop</span>
-<span id="cb20-8"><a href="#cb20-8"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-30_50c6c104a07f8819da9643c5a476fad6">
+<div class="sourceCode cell-code" id="cb24" data-code-line-numbers="3-4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1"></a>fairfield_pop <span class="ot">&lt;-</span> <span class="fu">conmat_population</span>(</span>
+<span id="cb24-2"><a href="#cb24-2"></a>  <span class="at">data =</span> fairfield,</span>
+<span id="cb24-3"><a href="#cb24-3"></a>  <span class="at">age =</span> lower.age.limit,</span>
+<span id="cb24-4"><a href="#cb24-4"></a>  <span class="at">population =</span> population</span>
+<span id="cb24-5"><a href="#cb24-5"></a>)</span>
+<span id="cb24-6"><a href="#cb24-6"></a><span class="fu">extrapolate_polymod</span>(</span>
+<span id="cb24-7"><a href="#cb24-7"></a> <span class="at">population =</span> fairfield_pop</span>
+<span id="cb24-8"><a href="#cb24-8"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="challenges-in-design-australian-centric" class="slide level2">
+<h2>Challenges in Design: Australian-Centric</h2>
+<ul>
+<li class="fragment">state name / LGA name fixed</li>
+<li class="fragment">A feature of doing things for a specific purpose and not thinking genearlly</li>
+</ul>
+<div class="cell" data-hash="index_cache/revealjs/example-ngm_bd58df3315f20bbc4c77318cef9be974">
+<div class="sourceCode cell-code" id="cb25" data-code-line-numbers="2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1"></a>ngm_fairfield <span class="ot">&lt;-</span> <span class="fu">generate_ngm</span>(</span>
+<span id="cb25-2"><a href="#cb25-2"></a>  <span class="at">lga_name =</span> <span class="st">"Fairfield (C)"</span>,</span>
+<span id="cb25-3"><a href="#cb25-3"></a>  <span class="at">age_breaks =</span> <span class="fu">c</span>(<span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">80</span>, <span class="at">by =</span> <span class="dv">5</span>), <span class="cn">Inf</span>),</span>
+<span id="cb25-4"><a href="#cb25-4"></a>  <span class="at">R_target =</span> <span class="fl">1.5</span></span>
+<span id="cb25-5"><a href="#cb25-5"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="challenges-in-design-australian-centric-1" class="slide level2">
+<h2>Challenges in Design: Australian-Centric</h2>
+<ul>
+<li class="fragment">Change of interface means breaking existing code</li>
+<li class="fragment">Can get around this with versioning and releases, or two functions</li>
+</ul>
+<div class="columns">
+<div class="column" style="width:45%;">
+<div class="cell" data-hash="index_cache/revealjs/example-ngm-2_098218915f92af1e73f7565be4445248">
+<div class="sourceCode cell-code" id="cb26" data-code-line-numbers="1-2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a><span class="fu">generate_ngm_oz</span>(</span>
+<span id="cb26-2"><a href="#cb26-2"></a>  <span class="at">lga_name =</span> <span class="st">"Fairfield (C)"</span>,</span>
+<span id="cb26-3"><a href="#cb26-3"></a>  <span class="at">R_target =</span> <span class="fl">1.5</span></span>
+<span id="cb26-4"><a href="#cb26-4"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div><div class="column" style="width:45%;">
+<div class="cell" data-hash="index_cache/revealjs/example-ngm-3_dc542954cbc6ecc046f3a206ee8eda45">
+<div class="sourceCode cell-code" id="cb27" data-code-line-numbers="1-2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1"></a><span class="fu">generate_ngm</span>(</span>
+<span id="cb27-2"><a href="#cb27-2"></a>  <span class="at">population =</span> fairfield,</span>
+<span id="cb27-3"><a href="#cb27-3"></a>  <span class="at">R_target =</span> <span class="fl">1.5</span></span>
+<span id="cb27-4"><a href="#cb27-4"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
 </div>
 </section>
 <section id="challenges-in-design-4" class="slide level2">
@@ -2052,9 +2194,29 @@ $all
 <li class="fragment">Interface to changing GAM model terms or specify model</li>
 <li class="fragment">Validating against Prem and other methods</li>
 <li class="fragment">Allowing more flexible uses of other data sources (Separate out the Australian focus)</li>
-<li class="fragment">Better automatic plotting</li>
+<li class="fragment">Better automatic plotting (use of <code>autoplot</code>)</li>
 </ul>
 </div>
+</section>
+<section id="comment-software-vs-code" class="slide level2">
+<h2>Comment: Software vs code</h2>
+<ul>
+<li class="fragment">Initial code was given as a <a href="https://gist.github.com/goldingn/85d2b7363d2da2888254bb6042144150">gist on github</a></li>
+<li class="fragment">Turning the code into a package was greatly facilitated with <a href="https://github.com/yonicd/sinew">sinew</a> (<a href="https://github.com/njtierney/conmat/commit/48656e98b81273b90ec5c26eeec87eebd5f159ce#diff-46b25c6f5c66616a55c46eb2d3e236d1e4acc4e5b33f3dc934cabf7d1d396daa">sinew code</a>)</li>
+<li class="fragment"><a href="https://github.com/njtierney/conmat/issues?q=is%3Aissue+is%3Aclosed">Github Issues are very useful</a></li>
+<li class="fragment">Extra contributions can be implemented as <a href="https://github.com/njtierney/conmat/pulls?page=2&amp;q=is%3Apr+is%3Aclosed">pull requests</a> which can be tested with GH actions</li>
+</ul>
+</section>
+<section id="comment-workflows" class="slide level2">
+<h2>Comment: Workflows</h2>
+<ul>
+<li class="fragment">Also worked on a workflow for determining the impact of <a href="https://github.com/njtierney/ttiq-simulation">“Test, Trace, Isolate, Quarantine” (TTIQ)</a></li>
+<li class="fragment">Used <a href="https://books.ropensci.org/targets/">targets</a> R package to manage workflow - <a href="https://github.com/njtierney/ttiq-simulation/blob/master/_targets.R">file</a></li>
+<li class="fragment">Allowed for many people to contribute to same code base (although a learning curve)</li>
+<li class="fragment"><a href="https://github.com/njtierney/ttiq-simulation/tree/master/tests/testthat">Used tests, very useful for plots</a> with <a href="https://vdiffr.r-lib.org/">vdiffr</a> (<strong>example</strong>)</li>
+<li class="fragment"><a href="https://github.com/njtierney/ttiq-simulation/issues?q=is%3Aissue+is%3Aclosed">Issues</a> helped facilitate task delivery/discussion</li>
+<li class="fragment"><a href="https://github.com/njtierney/ttiq-simulation/pulls">Pull requests helped isolate issues</a></li>
+</ul>
 </section></section>
 <section id="thanks" class="title-slide slide level1 center">
 <h1>Thanks</h1>
@@ -2067,11 +2229,11 @@ $all
 
 <section id="learning-more" class="title-slide slide level1 center">
 <h1>Learning more</h1>
-<p><svg viewbox="0 0 640 512" style="height:1em;position:relative;display:inline-block;top:.1em;" xmlns="http://www.w3.org/2000/svg"> <path d="M425.7 256c-16.9 0-32.8-9-41.4-23.4L320 126l-64.2 106.6c-8.7 14.5-24.6 23.5-41.5 23.5-4.5 0-9-.6-13.3-1.9L64 215v178c0 14.7 10 27.5 24.2 31l216.2 54.1c10.2 2.5 20.9 2.5 31 0L551.8 424c14.2-3.6 24.2-16.4 24.2-31V215l-137 39.1c-4.3 1.3-8.8 1.9-13.3 1.9zm212.6-112.2L586.8 41c-3.1-6.2-9.8-9.8-16.7-8.9L320 64l91.7 152.1c3.8 6.3 11.4 9.3 18.5 7.3l197.9-56.5c9.9-2.9 14.7-13.9 10.2-23.1zM53.2 41L1.7 143.8c-4.6 9.2.3 20.2 10.1 23l197.9 56.5c7.1 2 14.7-1 18.5-7.3L320 64 69.8 32.1c-6.9-.8-13.5 2.7-16.6 8.9z"></path> </svg> <a href="https://github.com/njtierney/conmat">conmat package</a></p>
-<p><svg viewbox="0 0 512 512" style="height:1em;position:relative;display:inline-block;top:.1em;" xmlns="http://www.w3.org/2000/svg"> <path d="M326.612 185.391c59.747 59.809 58.927 155.698.36 214.59-.11.12-.24.25-.36.37l-67.2 67.2c-59.27 59.27-155.699 59.262-214.96 0-59.27-59.26-59.27-155.7 0-214.96l37.106-37.106c9.84-9.84 26.786-3.3 27.294 10.606.648 17.722 3.826 35.527 9.69 52.721 1.986 5.822.567 12.262-3.783 16.612l-13.087 13.087c-28.026 28.026-28.905 73.66-1.155 101.96 28.024 28.579 74.086 28.749 102.325.51l67.2-67.19c28.191-28.191 28.073-73.757 0-101.83-3.701-3.694-7.429-6.564-10.341-8.569a16.037 16.037 0 0 1-6.947-12.606c-.396-10.567 3.348-21.456 11.698-29.806l21.054-21.055c5.521-5.521 14.182-6.199 20.584-1.731a152.482 152.482 0 0 1 20.522 17.197zM467.547 44.449c-59.261-59.262-155.69-59.27-214.96 0l-67.2 67.2c-.12.12-.25.25-.36.37-58.566 58.892-59.387 154.781.36 214.59a152.454 152.454 0 0 0 20.521 17.196c6.402 4.468 15.064 3.789 20.584-1.731l21.054-21.055c8.35-8.35 12.094-19.239 11.698-29.806a16.037 16.037 0 0 0-6.947-12.606c-2.912-2.005-6.64-4.875-10.341-8.569-28.073-28.073-28.191-73.639 0-101.83l67.2-67.19c28.239-28.239 74.3-28.069 102.325.51 27.75 28.3 26.872 73.934-1.155 101.96l-13.087 13.087c-4.35 4.35-5.769 10.79-3.783 16.612 5.864 17.194 9.042 34.999 9.69 52.721.509 13.906 17.454 20.446 27.294 10.606l37.106-37.106c59.271-59.259 59.271-155.699.001-214.959z"></path> </svg> <a href="njtierney.github.io/talk-auckland-2022">njtierney.github.io/talk-auckland-2022</a></p>
-<p><svg viewbox="0 0 512 512" style="height:1em;position:relative;display:inline-block;top:.1em;" xmlns="http://www.w3.org/2000/svg"> <path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"></path> </svg> nj_tierney</p>
-<p><svg viewbox="0 0 496 512" style="height:1em;position:relative;display:inline-block;top:.1em;" xmlns="http://www.w3.org/2000/svg"> <path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"></path> </svg> njtierney</p>
-<p><svg viewbox="0 0 512 512" style="height:1em;position:relative;display:inline-block;top:.1em;" xmlns="http://www.w3.org/2000/svg"> <path d="M476 3.2L12.5 270.6c-18.1 10.4-15.8 35.6 2.2 43.2L121 358.4l287.3-253.2c5.5-4.9 13.3 2.6 8.6 8.3L176 407v80.5c0 23.6 28.5 32.9 42.5 15.8L282 426l124.6 52.2c14.2 6 30.4-2.9 33-18.2l72-432C515 7.8 493.3-6.8 476 3.2z"></path> </svg> nicholas.tierney@gmail.com</p>
+<p><svg viewbox="0 0 640 512" style="height:1em;position:relative;display:inline-block;top:.1em;fill:#f0a800;" xmlns="http://www.w3.org/2000/svg"> <path d="M425.7 256c-16.9 0-32.8-9-41.4-23.4L320 126l-64.2 106.6c-8.7 14.5-24.6 23.5-41.5 23.5-4.5 0-9-.6-13.3-1.9L64 215v178c0 14.7 10 27.5 24.2 31l216.2 54.1c10.2 2.5 20.9 2.5 31 0L551.8 424c14.2-3.6 24.2-16.4 24.2-31V215l-137 39.1c-4.3 1.3-8.8 1.9-13.3 1.9zm212.6-112.2L586.8 41c-3.1-6.2-9.8-9.8-16.7-8.9L320 64l91.7 152.1c3.8 6.3 11.4 9.3 18.5 7.3l197.9-56.5c9.9-2.9 14.7-13.9 10.2-23.1zM53.2 41L1.7 143.8c-4.6 9.2.3 20.2 10.1 23l197.9 56.5c7.1 2 14.7-1 18.5-7.3L320 64 69.8 32.1c-6.9-.8-13.5 2.7-16.6 8.9z"></path> </svg> <a href="https://github.com/njtierney/conmat">conmat package</a></p>
+<p><svg viewbox="0 0 512 512" style="height:1em;position:relative;display:inline-block;top:.1em;fill:#f0a800;" xmlns="http://www.w3.org/2000/svg"> <path d="M326.612 185.391c59.747 59.809 58.927 155.698.36 214.59-.11.12-.24.25-.36.37l-67.2 67.2c-59.27 59.27-155.699 59.262-214.96 0-59.27-59.26-59.27-155.7 0-214.96l37.106-37.106c9.84-9.84 26.786-3.3 27.294 10.606.648 17.722 3.826 35.527 9.69 52.721 1.986 5.822.567 12.262-3.783 16.612l-13.087 13.087c-28.026 28.026-28.905 73.66-1.155 101.96 28.024 28.579 74.086 28.749 102.325.51l67.2-67.19c28.191-28.191 28.073-73.757 0-101.83-3.701-3.694-7.429-6.564-10.341-8.569a16.037 16.037 0 0 1-6.947-12.606c-.396-10.567 3.348-21.456 11.698-29.806l21.054-21.055c5.521-5.521 14.182-6.199 20.584-1.731a152.482 152.482 0 0 1 20.522 17.197zM467.547 44.449c-59.261-59.262-155.69-59.27-214.96 0l-67.2 67.2c-.12.12-.25.25-.36.37-58.566 58.892-59.387 154.781.36 214.59a152.454 152.454 0 0 0 20.521 17.196c6.402 4.468 15.064 3.789 20.584-1.731l21.054-21.055c8.35-8.35 12.094-19.239 11.698-29.806a16.037 16.037 0 0 0-6.947-12.606c-2.912-2.005-6.64-4.875-10.341-8.569-28.073-28.073-28.191-73.639 0-101.83l67.2-67.19c28.239-28.239 74.3-28.069 102.325.51 27.75 28.3 26.872 73.934-1.155 101.96l-13.087 13.087c-4.35 4.35-5.769 10.79-3.783 16.612 5.864 17.194 9.042 34.999 9.69 52.721.509 13.906 17.454 20.446 27.294 10.606l37.106-37.106c59.271-59.259 59.271-155.699.001-214.959z"></path> </svg> <a href="njtierney.github.io/talk-auckland-2022">njtierney.github.io/talk-auckland-2022</a></p>
+<p><svg viewbox="0 0 512 512" style="height:1em;position:relative;display:inline-block;top:.1em;fill:#f0a800;" xmlns="http://www.w3.org/2000/svg"> <path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"></path> </svg> nj_tierney</p>
+<p><svg viewbox="0 0 496 512" style="height:1em;position:relative;display:inline-block;top:.1em;fill:#f0a800;" xmlns="http://www.w3.org/2000/svg"> <path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"></path> </svg> njtierney</p>
+<p><svg viewbox="0 0 512 512" style="height:1em;position:relative;display:inline-block;top:.1em;fill:#f0a800;" xmlns="http://www.w3.org/2000/svg"> <path d="M476 3.2L12.5 270.6c-18.1 10.4-15.8 35.6 2.2 43.2L121 358.4l287.3-253.2c5.5-4.9 13.3 2.6 8.6 8.3L176 407v80.5c0 23.6 28.5 32.9 42.5 15.8L282 426l124.6 52.2c14.2 6 30.4-2.9 33-18.2l72-432C515 7.8 493.3-6.8 476 3.2z"></path> </svg> nicholas.tierney@gmail.com</p>
 </section>
 
 <section id="end." class="title-slide slide level1 center">
@@ -2080,38 +2242,74 @@ $all
 </section>
 
 <section>
-<section id="morgue" class="title-slide slide level1 center">
-<h1>Morgue</h1>
+<section id="extras" class="title-slide slide level1 center">
+<h1>Extras</h1>
 
 </section>
-<section id="describing-spread-transmission" class="slide level2">
-<h2>Describing spread / transmission</h2>
-<ul>
-<li class="fragment"><p>Epidemiological models often use a “contact matrix” to describe the spread of infectious diseases.</p></li>
-<li class="fragment"><p>Contact matrices describe the degree of contact between individuals of given age groups.</p></li>
-</ul>
+<section id="how-does-the-model-work" class="slide level2">
+<h2>How does the model work?</h2>
+<div class="sourceCode" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a>fit_single_contact_model <span class="ot">&lt;-</span> <span class="cf">function</span>(contact_data, population) {</span>
+<span id="cb28-2"><a href="#cb28-2"></a></span>
+<span id="cb28-3"><a href="#cb28-3"></a>  <span class="co"># programatically add the offset term to the formula, so the model defines</span></span>
+<span id="cb28-4"><a href="#cb28-4"></a>  <span class="co"># information about the setting, without us having to pass it through to the</span></span>
+<span id="cb28-5"><a href="#cb28-5"></a>  <span class="co"># prediction data</span></span>
+<span id="cb28-6"><a href="#cb28-6"></a>  formula_no_offset <span class="ot">&lt;-</span> contacts <span class="sc">~</span></span>
+<span id="cb28-7"><a href="#cb28-7"></a>    <span class="co"># deviation of contact age distribution from population age distribution</span></span>
+<span id="cb28-8"><a href="#cb28-8"></a>    <span class="fu">s</span>(age_to) <span class="sc">+</span></span>
+<span id="cb28-9"><a href="#cb28-9"></a>    <span class="co"># number of contacts by age</span></span>
+<span id="cb28-10"><a href="#cb28-10"></a>    <span class="fu">s</span>(age_from) <span class="sc">+</span></span>
+<span id="cb28-11"><a href="#cb28-11"></a>    <span class="co"># intergenerational contact patterns - enables the off-diagonals</span></span>
+<span id="cb28-12"><a href="#cb28-12"></a>    <span class="fu">s</span>(<span class="fu">abs</span>(age_from <span class="sc">-</span> age_to)) <span class="sc">+</span></span>
+<span id="cb28-13"><a href="#cb28-13"></a>    <span class="co"># interaction between intergenerational patterns and age_from, to remove</span></span>
+<span id="cb28-14"><a href="#cb28-14"></a>    <span class="co"># ridge for some ages and settings</span></span>
+<span id="cb28-15"><a href="#cb28-15"></a>    <span class="fu">s</span>(<span class="fu">abs</span>(age_from <span class="sc">-</span> age_to), age_from) <span class="sc">+</span></span>
+<span id="cb28-16"><a href="#cb28-16"></a>    <span class="co"># probabilities of both attending (any) school/work</span></span>
+<span id="cb28-17"><a href="#cb28-17"></a>    school_probability <span class="sc">+</span></span>
+<span id="cb28-18"><a href="#cb28-18"></a>    work_probability</span>
+<span id="cb28-19"><a href="#cb28-19"></a>  </span>
+<span id="cb28-20"><a href="#cb28-20"></a>  <span class="co"># choose the offset variable based on the setting</span></span>
+<span id="cb28-21"><a href="#cb28-21"></a>  setting <span class="ot">&lt;-</span> contact_data<span class="sc">$</span>setting[<span class="dv">1</span>]</span>
+<span id="cb28-22"><a href="#cb28-22"></a>  offset_variable <span class="ot">&lt;-</span> <span class="cf">switch</span>(</span>
+<span id="cb28-23"><a href="#cb28-23"></a>    setting,</span>
+<span id="cb28-24"><a href="#cb28-24"></a>    <span class="at">school =</span> <span class="st">"log_contactable_population_school"</span>,</span>
+<span id="cb28-25"><a href="#cb28-25"></a>    <span class="st">"log_contactable_population"</span></span>
+<span id="cb28-26"><a href="#cb28-26"></a>  )</span>
+<span id="cb28-27"><a href="#cb28-27"></a>  </span>
+<span id="cb28-28"><a href="#cb28-28"></a>  <span class="co"># add multiplicative offset for population contactable, to enable</span></span>
+<span id="cb28-29"><a href="#cb28-29"></a>  <span class="co"># extrapolation to new demographies</span></span>
+<span id="cb28-30"><a href="#cb28-30"></a>  <span class="co"># in mgcv, this part of the offset gets used in prediction, which </span></span>
+<span id="cb28-31"><a href="#cb28-31"></a>  <span class="co"># is what we want. Those are the "contactable" parts, which we use</span></span>
+<span id="cb28-32"><a href="#cb28-32"></a>  <span class="co"># to extrapolate to new demographics.</span></span>
+<span id="cb28-33"><a href="#cb28-33"></a>  formula_offset <span class="ot">&lt;-</span> <span class="fu">sprintf</span>(<span class="st">"~. + offset(%s)"</span>, offset_variable)</span>
+<span id="cb28-34"><a href="#cb28-34"></a>  formula <span class="ot">&lt;-</span> <span class="fu">update</span>(formula_no_offset, formula_offset)</span>
+<span id="cb28-35"><a href="#cb28-35"></a>  </span>
+<span id="cb28-36"><a href="#cb28-36"></a>  <span class="co"># contact model for all locations together</span></span>
+<span id="cb28-37"><a href="#cb28-37"></a>  contact_data <span class="sc">%&gt;%</span></span>
+<span id="cb28-38"><a href="#cb28-38"></a>    <span class="fu">add_modelling_features</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb28-39"><a href="#cb28-39"></a>      <span class="co"># The modelling features added here are:</span></span>
+<span id="cb28-40"><a href="#cb28-40"></a>        <span class="co"># the school and work offsets</span></span>
+<span id="cb28-41"><a href="#cb28-41"></a>        <span class="co"># pop_age_to (interpolated population)</span></span>
+<span id="cb28-42"><a href="#cb28-42"></a>        <span class="co"># `log_contactable_population_school`, and ` log_contactable_population`</span></span>
+<span id="cb28-43"><a href="#cb28-43"></a>      population <span class="ot">=</span> population</span>
+<span id="cb28-44"><a href="#cb28-44"></a>    mgcv<span class="sc">::</span><span class="fu">bam</span>(</span>
+<span id="cb28-45"><a href="#cb28-45"></a>      <span class="at">formula =</span> formula,</span>
+<span id="cb28-46"><a href="#cb28-46"></a>      <span class="at">family =</span> stats<span class="sc">::</span>poisson,</span>
+<span id="cb28-47"><a href="#cb28-47"></a>      <span class="co"># add number of participants as a multilpicative offset here rather than in</span></span>
+<span id="cb28-48"><a href="#cb28-48"></a>      <span class="co"># the formula, so it is not needed for prediction,</span></span>
+<span id="cb28-49"><a href="#cb28-49"></a>      <span class="co"># </span><span class="al">NOTE</span><span class="co">: the offset of participants allows us to get the rate per person</span></span>
+<span id="cb28-50"><a href="#cb28-50"></a>      <span class="at">offset =</span> <span class="fu">log</span>(participants),</span>
+<span id="cb28-51"><a href="#cb28-51"></a>      <span class="at">data =</span> .</span>
+<span id="cb28-52"><a href="#cb28-52"></a>    )</span>
+<span id="cb28-53"><a href="#cb28-53"></a>  </span>
+<span id="cb28-54"><a href="#cb28-54"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="contact-data" class="slide level2">
-<h2>Contact data</h2>
-<ul>
-<li class="fragment">Contact matrices are produced from empirical data resulting from a contact survey</li>
-<li class="fragment">Requires individuals to diary the amount and manner of contact a person has in a day.</li>
-</ul>
-</section>
-<section id="using-contact-matrices" class="slide level2">
-<h2>Using contact matrices</h2>
-<ul>
-<li class="fragment">Calculate R0 (Expected number of people someone infects)</li>
-<li class="fragment">Adjust to transmission risk</li>
-<li class="fragment">Adjust transmission risk by vaccination
-<ul>
-<li class="fragment">Then get an adjusted R0</li>
-</ul></li>
-</ul>
-</section>
-<section id="demonstration-of-conmat-1" class="slide level2">
-<h2>Demonstration of conmat</h2>
-<div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-28_e731bc2b0838c8003446b89108a150ef">
+<section id="alt-approach-to-conmat-model" class="slide level2">
+<h2>Alt approach to conmat model</h2>
+<div class="cell" data-hash="index_cache/revealjs/show-fairfield_97a51d6a5badc5e1406c5c9eb2e60906">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1"></a><span class="co"># fit a model</span></span>
+<span id="cb29-2"><a href="#cb29-2"></a><span class="fu">library</span>(conmat)</span>
+<span id="cb29-3"><a href="#cb29-3"></a>fairfield_age_pop <span class="ot">&lt;-</span> <span class="fu">abs_age_lga</span>(<span class="st">"Fairfield (C)"</span>)</span>
+<span id="cb29-4"><a href="#cb29-4"></a>fairfield_age_pop</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 18 × 4
    lga           lower.age.limit  year population
@@ -2137,15 +2335,22 @@ $all
 </div>
 </div>
 </section>
-<section id="demonstration-of-conmat-2" class="slide level2">
-<h2>Demonstration of conmat</h2>
-<div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-29_293b12a301645622aa1b0ed803702ea9">
-
+<section id="alt-approach-to-conmat-model-1" class="slide level2">
+<h2>Alt approach to conmat model</h2>
+<div class="cell" data-hash="index_cache/revealjs/alt-fit_102cabfa484fb20fe2bb1bea4c76d52e">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1"></a>polymod_contact_data <span class="ot">&lt;-</span> <span class="fu">get_polymod_setting_data</span>()</span>
+<span id="cb31-2"><a href="#cb31-2"></a>polymod_survey_data <span class="ot">&lt;-</span> <span class="fu">get_polymod_population</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="demonstration-of-conmat-3" class="slide level2">
-<h2>Demonstration of conmat</h2>
-<div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-30_bcb93d24f3db08d8d08f536773e44512">
+<section id="alt-approach-to-conmat-model-2" class="slide level2">
+<h2>Alt approach to conmat model</h2>
+<div class="cell" data-hash="index_cache/revealjs/alt-fit-2_f0988bf495ed617a1c3953b8926d2dbd">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1"></a>setting_models <span class="ot">&lt;-</span> <span class="fu">fit_setting_contacts</span>(</span>
+<span id="cb32-2"><a href="#cb32-2"></a>  <span class="at">contact_data_list =</span> polymod_contact_data,</span>
+<span id="cb32-3"><a href="#cb32-3"></a>  <span class="at">population =</span> polymod_survey_data</span>
+<span id="cb32-4"><a href="#cb32-4"></a>  )</span>
+<span id="cb32-5"><a href="#cb32-5"></a></span>
+<span id="cb32-6"><a href="#cb32-6"></a><span class="fu">str</span>(setting_models)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>List of 4
  $ home  :List of 54
@@ -3707,9 +3912,16 @@ $all
 </div>
 </div>
 </section>
-<section id="demonstration-of-conmat-4" class="slide level2">
-<h2>Demonstration of conmat</h2>
-<div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-31_ed666a4e1a1e3f8b7201272b61b7cb72">
+<section id="alt-approach-to-conmat-model-3" class="slide level2">
+<h2>Alt approach to conmat model</h2>
+<div class="cell" data-hash="index_cache/revealjs/alt-fit-3_074781c7c54b570c247aea7607b9997c">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1"></a>synthetic_settings_5y_fairfield <span class="ot">&lt;-</span> <span class="fu">predict_setting_contacts</span>(</span>
+<span id="cb34-2"><a href="#cb34-2"></a>  <span class="at">population =</span> fairfield_age_pop,</span>
+<span id="cb34-3"><a href="#cb34-3"></a>  <span class="at">contact_model =</span> setting_models,</span>
+<span id="cb34-4"><a href="#cb34-4"></a>  <span class="at">age_breaks =</span> <span class="fu">c</span>(<span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">85</span>, <span class="at">by =</span> <span class="dv">5</span>), <span class="cn">Inf</span>)</span>
+<span id="cb34-5"><a href="#cb34-5"></a>  )</span>
+<span id="cb34-6"><a href="#cb34-6"></a></span>
+<span id="cb34-7"><a href="#cb34-7"></a>synthetic_settings_5y_fairfield</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>$home
                [0,5)     [5,10)    [10,15)     [15,20)    [20,25)    [25,30)
@@ -4045,10 +4257,13 @@ $all
 [85,Inf) 0.1140113 0.07539550 0.07435872 0.07667611 0.05482621 0.07464751</code></pre>
 </div>
 </div>
+</section></section>
+<section id="this-is-the-last-slide." class="title-slide slide level1 center">
+<h1><strong>This is the last slide.</strong></h1>
 <div class="footer footer-default">
 
 </div>
-</section></section>
+</section>
     </div>
   </div>
 

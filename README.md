@@ -1,8 +1,6 @@
 # Extendable projection of social contact matrices
 <!-- NETLIFY BADGE SHOULD GO HERE-->
 
-This is a slide template I have put on github so that I can get started with talks easier.
-
 # Abstract
 
 Contact matrices describe the degree of face-to-face contact between individuals of given age groups. These matrices are commonly used to model how diseases such as COVID-19 spread in a population through social contact. Contact matrices are produced from empirical data resulting from a contact survey, which requires individuals to diary the amount and manner of contact a person has in a day. However, these surveys are highly time-consuming and expensive to run, meaning that there exists only a handful of these empirical datasets globally. 
